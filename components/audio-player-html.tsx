@@ -6,27 +6,24 @@ import { Button } from "@/components/ui/button"
 
 export function AudioPlayerHtml() {
   const [isPlaying, setIsPlaying] = useState(false)
-  const [isLoaded, setIsLoaded] = useState(false)
-  const [audioError, setAudioError] = useState<string | null>(null)
+  const [audioAvailable, setAudioAvailable] = useState(false)
+  const [showError, setShowError] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
 
   useEffect(() => {
-    // Check if we're in a browser environment
-    if (typeof window === "undefined") return
-
-    // Try to preload the audio file to check if it exists
+    // Check if audio file exists without trying to load it
     const checkAudio = async () => {
       try {
         const response = await fetch("/audio/background-music.mp3", { method: "HEAD" })
-        if (!response.ok) {
-          console.error(`Audio file not found: ${response.status}`)
-          setAudioError(`Audio file not available (${response.status})`)
+        if (response.ok) {
+          setAudioAvailable(true)
         } else {
-          setIsLoaded(true)
+          console.log("Audio file not available")
+          setAudioAvailable(false)
         }
       } catch (err) {
-        console.error("Error checking audio file:", err)
-        setAudioError("Audio file not available")
+        console.log("Error checking audio file:", err)
+        setAudioAvailable(false)
       }
     }
 
@@ -34,35 +31,37 @@ export function AudioPlayerHtml() {
   }, [])
 
   const toggleAudio = () => {
-    if (!audioRef.current || audioError) return
+    if (!audioRef.current || !audioAvailable) {
+      setShowError(true)
+      setTimeout(() => setShowError(false), 3000)
+      return
+    }
 
     if (isPlaying) {
       audioRef.current.pause()
       setIsPlaying(false)
     } else {
-      // Clear any previous errors
       const playPromise = audioRef.current.play()
-
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
             setIsPlaying(true)
           })
           .catch((err) => {
-            console.error("Playback failed:", err)
-            setAudioError("Audio playback failed")
+            console.log("Playback failed:", err)
+            setShowError(true)
+            setTimeout(() => setShowError(false), 3000)
           })
       }
     }
   }
 
-  // If there's an error, still render the button but disable it
+  // If audio is not available, don't render the audio element
   return (
     <>
-      {!audioError && (
-        <audio ref={audioRef} preload="auto" loop onError={() => setAudioError("Audio file not available")}>
+      {audioAvailable && (
+        <audio ref={audioRef} preload="none">
           <source src="/audio/background-music.mp3" type="audio/mpeg" />
-          Your browser does not support the audio element.
         </audio>
       )}
 
@@ -72,14 +71,13 @@ export function AudioPlayerHtml() {
         className="fixed bottom-8 left-8 z-50 rounded-full w-12 h-12 bg-black/50 backdrop-blur-md border-teal-500/50 text-teal-400 hover:bg-teal-900/20 hover:text-teal-300"
         onClick={toggleAudio}
         title={isPlaying ? "Mute music" : "Play music"}
-        disabled={!!audioError}
       >
         {isPlaying ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
       </Button>
 
-      {audioError && (
-        <div className="fixed bottom-24 left-8 z-50 bg-red-900/80 text-white text-xs p-2 rounded max-w-xs opacity-70">
-          {audioError}
+      {showError && (
+        <div className="fixed bottom-24 left-8 z-50 bg-black/80 text-white text-xs p-2 rounded max-w-xs">
+          {audioAvailable ? "Unable to play audio" : "Audio file not available"}
         </div>
       )}
     </>
