@@ -4,12 +4,45 @@ import type React from "react"
 
 import { useRef, useState, useEffect, Suspense } from "react"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
-import { Environment, OrbitControls, Float, Text3D, Sphere, MeshDistortMaterial, Html } from "@react-three/drei"
+import {
+  Environment,
+  OrbitControls,
+  Float,
+  Text3D,
+  Sphere,
+  MeshDistortMaterial,
+  Html,
+  useFont,
+} from "@react-three/drei"
 import type { Group } from "three"
 import { useRouter } from "next/navigation"
 
+// Pre-load the font
+const fontUrl = "/fonts/Geist_Bold.json"
+
 export function MainScene() {
   const [hasError, setHasError] = useState(false)
+  const [fontLoaded, setFontLoaded] = useState(false)
+
+  // Preload the font
+  useEffect(() => {
+    const loadFont = async () => {
+      try {
+        const response = await fetch(fontUrl)
+        if (!response.ok) {
+          console.error(`Font file not found: ${response.status}`)
+          setHasError(true)
+          return
+        }
+        setFontLoaded(true)
+      } catch (err) {
+        console.error("Error loading font:", err)
+        setHasError(true)
+      }
+    }
+
+    loadFont()
+  }, [])
 
   // Error handler for the Canvas
   const handleErrors = (error: Error) => {
@@ -27,6 +60,14 @@ export function MainScene() {
             Try Again
           </button>
         </div>
+      </div>
+    )
+  }
+
+  if (!fontLoaded) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-black">
+        <div className="w-12 h-12 rounded-full border-t-2 border-b-2 border-teal-500 animate-spin"></div>
       </div>
     )
   }
@@ -111,6 +152,9 @@ function ErrorBoundary({ children, fallback }: { children: React.ReactNode; fall
 function NameTitle({ position }: { position: [number, number, number] }) {
   const groupRef = useRef<Group>(null)
 
+  // Preload font
+  useFont(fontUrl)
+
   useFrame(({ clock }) => {
     if (groupRef.current) {
       groupRef.current.rotation.y = Math.sin(clock.getElapsedTime() * 0.3) * 0.2
@@ -120,7 +164,7 @@ function NameTitle({ position }: { position: [number, number, number] }) {
   return (
     <group ref={groupRef} position={position}>
       <Text3D
-        font="/fonts/Geist_Bold.json"
+        font={fontUrl}
         size={1.2}
         height={0.3}
         curveSegments={12}
@@ -148,7 +192,7 @@ function NameTitle({ position }: { position: [number, number, number] }) {
         </mesh>
 
         <Text3D
-          font="/fonts/Geist_Bold.json"
+          font={fontUrl}
           size={1.2}
           height={0.3}
           curveSegments={12}
@@ -178,6 +222,7 @@ function NameTitle({ position }: { position: [number, number, number] }) {
   )
 }
 
+// The rest of the component functions remain unchanged
 function GridPoints() {
   const pointsRef = useRef<Group>(null)
   const { viewport } = useThree()
