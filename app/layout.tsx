@@ -3,6 +3,7 @@ import "@/app/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AudioPlayerHtml } from "@/components/audio-player-html"
 import { MouseEffects } from "@/components/mouse-effects"
+import { ErrorBoundary } from "@/components/error-boundary"
 
 export const metadata = {
   title: "Kiran Kulal - Creative Developer",
@@ -20,9 +21,11 @@ export default function RootLayout({
     <html lang="en">
       <body className="bg-black">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          <MouseEffects />
-          {children}
-          <AudioPlayerHtml />
+          <ErrorBoundary>
+            <MouseEffects />
+            {children}
+            <AudioPlayerHtml />
+          </ErrorBoundary>
         </ThemeProvider>
       </body>
     </html>

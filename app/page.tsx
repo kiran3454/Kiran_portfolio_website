@@ -1,15 +1,27 @@
 "use client"
 
+import type React from "react"
+
 import { useRouter } from "next/navigation"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { Button } from "@/components/ui/button"
-import { MainScene } from "@/components/main-scene"
 import { ArrowDown, Github, Linkedin, Mail, FileText } from "lucide-react"
+import dynamic from "next/dynamic"
+
+// Dynamically import the MainScene component with no SSR
+const DynamicMainScene = dynamic(() => import("@/components/main-scene").then((mod) => ({ default: mod.MainScene })), {
+  ssr: false,
+  loading: () => (
+    <div className="absolute inset-0 flex items-center justify-center">
+      <div className="w-12 h-12 rounded-full border-t-2 border-b-2 border-teal-500 animate-spin"></div>
+    </div>
+  ),
+})
 
 export default function Home() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     // Simulate loading assets
@@ -17,32 +29,19 @@ export default function Home() {
       setLoading(false)
     }, 2000)
 
-    // Create audio element for the home page
-    audioRef.current = new Audio()
-    audioRef.current.src = "/audio/background-music.mp3"
-    audioRef.current.loop = true
-    audioRef.current.volume = 0.5
-
-    // Add error event listener for debugging
-    audioRef.current.addEventListener("error", (e) => {
-      console.log("Audio error event:", e)
-      console.log("Audio error details:", audioRef.current?.error)
-    })
-
     return () => {
       clearTimeout(timer)
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current = null
-      }
     }
   }, [])
 
+  // Handle errors in 3D content
+  const handleError = (err: Error) => {
+    console.error("Error loading 3D content:", err)
+    setError("There was an error loading the 3D content. Please try refreshing the page.")
+  }
+
   return (
     <main className="relative w-full h-screen overflow-hidden bg-black">
-      {/* Add audio element directly in the DOM */}
-      <audio id="background-music" src="/audio/background-music.mp3" loop preload="auto" style={{ display: "none" }} />
-
       {loading ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-50 bg-black">
           <div className="w-12 h-12 rounded-full border-t-2 border-b-2 border-teal-500 animate-spin mb-4"></div>
@@ -50,10 +49,33 @@ export default function Home() {
             Loading Portfolio<span className="animate-pulse">...</span>
           </h1>
         </div>
+      ) : error ? (
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-50 bg-black">
+          <div className="max-w-md text-center p-6">
+            <h1 className="text-2xl font-bold text-white mb-4">Oops! Something went wrong</h1>
+            <p className="text-gray-400 mb-6">{error}</p>
+            <Button
+              className="bg-teal-500 hover:bg-teal-600 text-black font-bold"
+              onClick={() => window.location.reload()}
+            >
+              Refresh Page
+            </Button>
+          </div>
+        </div>
       ) : (
         <>
           <div className="absolute inset-0 z-10">
-            <MainScene />
+            <Suspense
+              fallback={
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full border-t-2 border-b-2 border-teal-500 animate-spin"></div>
+                </div>
+              }
+            >
+              <ErrorCatcher onError={handleError}>
+                <DynamicMainScene />
+              </ErrorCatcher>
+            </Suspense>
           </div>
 
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-4 pointer-events-none">
@@ -322,6 +344,22 @@ export default function Home() {
       </footer>
     </main>
   )
+}
+
+// Error catcher component for 3D content
+function ErrorCatcher({ children, onError }: { children: React.ReactNode; onError: (err: Error) => void }) {
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error("Caught error:", event.error)
+      onError(event.error)
+      event.preventDefault()
+    }
+
+    window.addEventListener("error", handleError)
+    return () => window.removeEventListener("error", handleError)
+  }, [onError])
+
+  return <>{children}</>
 }
 
 function SkillBar({ skill, percentage }: { skill: string; percentage: number }) {

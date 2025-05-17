@@ -1,42 +1,113 @@
 "use client"
 
-import { useRef, useState, useEffect } from "react"
+import type React from "react"
+
+import { useRef, useState, useEffect, Suspense } from "react"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import { Environment, OrbitControls, Float, Text3D, Sphere, MeshDistortMaterial, Html } from "@react-three/drei"
 import type { Group } from "three"
 import { useRouter } from "next/navigation"
 
 export function MainScene() {
+  const [hasError, setHasError] = useState(false)
+
+  // Error handler for the Canvas
+  const handleErrors = (error: Error) => {
+    console.error("Three.js error:", error)
+    setHasError(true)
+  }
+
+  if (hasError) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-black">
+        <div className="text-center p-6">
+          <h2 className="text-xl text-white mb-4">3D content could not be loaded</h2>
+          <p className="text-gray-400 mb-4">Your browser might not support WebGL or 3D graphics.</p>
+          <button className="px-4 py-2 bg-teal-500 text-black rounded-md" onClick={() => window.location.reload()}>
+            Try Again
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <Canvas camera={{ position: [0, 0, 20], fov: 50 }}>
-      <color attach="background" args={["#050505"]} />
-      <fog attach="fog" args={["#050505", 10, 40]} />
-      <ambientLight intensity={0.4} />
-      <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
-      <Environment preset="city" />
+    <ErrorBoundary
+      fallback={
+        <div className="w-full h-full flex items-center justify-center bg-black">
+          <div className="text-center p-6">
+            <h2 className="text-xl text-white mb-4">3D content could not be loaded</h2>
+            <p className="text-gray-400 mb-4">Your browser might not support WebGL or 3D graphics.</p>
+            <button className="px-4 py-2 bg-teal-500 text-black rounded-md" onClick={() => window.location.reload()}>
+              Try Again
+            </button>
+          </div>
+        </div>
+      }
+    >
+      <Canvas
+        camera={{ position: [0, 0, 20], fov: 50 }}
+        onError={handleErrors}
+        fallback={
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full border-t-2 border-b-2 border-teal-500 animate-spin"></div>
+          </div>
+        }
+      >
+        <color attach="background" args={["#050505"]} />
+        <fog attach="fog" args={["#050505", 10, 40]} />
+        <ambientLight intensity={0.4} />
+        <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
+        <Suspense fallback={null}>
+          <Environment preset="city" />
 
-      <OrbitControls
-        enableZoom={false}
-        enablePan={false}
-        rotateSpeed={0.4}
-        autoRotate
-        autoRotateSpeed={0.5}
-        minPolarAngle={Math.PI / 2.5}
-        maxPolarAngle={Math.PI / 1.5}
-      />
+          <OrbitControls
+            enableZoom={false}
+            enablePan={false}
+            rotateSpeed={0.4}
+            autoRotate
+            autoRotateSpeed={0.5}
+            minPolarAngle={Math.PI / 2.5}
+            maxPolarAngle={Math.PI / 1.5}
+          />
 
-      <Float speed={1.5} rotationIntensity={0.4} floatIntensity={0.8}>
-        <NameTitle position={[0, 4, 0]} />
-      </Float>
+          <Float speed={1.5} rotationIntensity={0.4} floatIntensity={0.8}>
+            <NameTitle position={[0, 4, 0]} />
+          </Float>
 
-      <GridPoints />
-      <FloatingSkills />
-      <ConnectingSphere />
-      <ProjectsShowcase />
-    </Canvas>
+          <GridPoints />
+          <FloatingSkills />
+          <ConnectingSphere />
+          <ProjectsShowcase />
+        </Suspense>
+      </Canvas>
+    </ErrorBoundary>
   )
 }
 
+// Simple error boundary component for the 3D scene
+function ErrorBoundary({ children, fallback }: { children: React.ReactNode; fallback: React.ReactNode }) {
+  const [hasError, setHasError] = useState(false)
+
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error("Error in 3D scene:", event.error)
+      setHasError(true)
+      event.preventDefault()
+    }
+
+    window.addEventListener("error", handleError)
+    return () => window.removeEventListener("error", handleError)
+  }, [])
+
+  if (hasError) {
+    return <>{fallback}</>
+  }
+
+  return <>{children}</>
+}
+
+// Rest of the component remains the same
 function NameTitle({ position }: { position: [number, number, number] }) {
   const groupRef = useRef<Group>(null)
 
@@ -73,13 +144,7 @@ function NameTitle({ position }: { position: [number, number, number] }) {
       <group position={[2, 0, 0]}>
         <mesh>
           <torusGeometry args={[1.2, 0.08, 16, 100]} />
-          <meshStandardMaterial
-            color="#14b8a6"
-            emissive="#14b8a6"
-            emissiveIntensity={0.5}
-            transparent
-            opacity={0.6}
-          />
+          <meshStandardMaterial color="#14b8a6" emissive="#14b8a6" emissiveIntensity={0.5} transparent opacity={0.6} />
         </mesh>
 
         <Text3D
