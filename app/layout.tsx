@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     google: "F9DUyFm_7HEUiasoA6bOecmbqIfRGbwG_5q8Oun9__U",
   },
 };
-
+//love u ptsa
 export default function RootLayout({
   children,
 }: {
