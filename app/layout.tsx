@@ -1,33 +1,39 @@
-import type React from "react"
-import "@/app/globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import { AudioPlayerCloudinary } from "@/components/audio-player-cloudinary"
-import { MouseEffects } from "@/components/mouse-effects"
-import { ErrorBoundary } from "@/components/error-boundary"
-import { LenisProvider } from "@/components/lenis-provider" // Import LenisProvider
+import type React from "react";
+import type { Metadata } from "next";
+import "@/app/globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
+import { AudioPlayerCloudinary } from "@/components/audio-player-cloudinary";
+import { MouseEffects } from "@/components/mouse-effects";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { LenisProvider } from "@/components/lenis-provider"; // Import LenisProvider
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Kiran Kulal - Creative Developer",
   description:
     "Portfolio of Kiran Kulal, a creative developer specializing in interactive web experiences and 3D animations.",
   generator: "v0.dev",
- verification:{
-   google:'F9DUyFm_7HEUiasoA6bOecmbqIfRGbwG_5q8Oun9__U'
-}
-}
+  verification: {
+    google: "F9DUyFm_7HEUiasoA6bOecmbqIfRGbwG_5q8Oun9__U",
+  },
+};
+
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
       <body className="bg-black">
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
           <ErrorBoundary>
             <MouseEffects />
             <LenisProvider>
-              {" "}
               {/* Wrap children with LenisProvider */}
               {children}
             </LenisProvider>
@@ -36,5 +42,5 @@ export default function RootLayout({
         </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }
