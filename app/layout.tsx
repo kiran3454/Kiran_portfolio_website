@@ -12,7 +12,7 @@ export const metadata = {
     "Portfolio of Kiran Kulal, a creative developer specializing in interactive web experiences and 3D animations.",
   generator: "v0.dev",
  verification:{
-   google='F9DUyFm_7HEUiasoA6bOecmbqIfRGbwG_5q8Oun9__U'
+   google:'F9DUyFm_7HEUiasoA6bOecmbqIfRGbwG_5q8Oun9__U'
 }
 }
 export default function RootLayout({
